@@ -69,6 +69,57 @@ public:
 
     void StartGame(tcp::socket& socket, bool my_initiative) {
         // TODO: реализуйте самостоятельно
+        PrintFields();
+        while (!IsGameEnded()) {
+
+            if(!my_initiative){
+                std::cout << "Waiting for turn... " << std::endl;
+                auto client_data = ReadExact<2>(socket);
+
+                std::cout << "Shot to " << client_data->data() << std::endl;
+
+                auto move = ParseMove(client_data->data());
+
+                auto shoot_res = my_field_.Shoot(move->second, move->first);
+
+                if(shoot_res == SeabattleField::ShotResult::MISS)
+                    my_initiative = !my_initiative;
+
+                //bool
+                WriteExact(socket, std::string(1, static_cast<int>(shoot_res)));
+
+            }else {
+
+                std::string shoot;
+                std::cout << "Your turn: ";
+                std::getline(std::cin, shoot);
+                //bool
+                WriteExact(socket, shoot);
+
+                auto client_data = ReadExact<1>(socket);
+                auto move = ParseMove(shoot);
+                auto shoot_res = static_cast<SeabattleField::ShotResult>(client_data->data()[0]);
+
+                //std::cout << "shoot... " << shoot_res << std::endl;
+
+                switch (shoot_res) {
+                case SeabattleField::ShotResult::MISS:
+                    other_field_.MarkMiss(move->second, move->first);
+                    std::cout << "MISS!" << std::endl;
+                    my_initiative = !my_initiative;
+                    break;
+                case SeabattleField::ShotResult::HIT:
+                    other_field_.MarkHit(move->second, move->first);
+                    std::cout << "HIT!" << std::endl;
+                    break;
+                case SeabattleField::ShotResult::KILL:
+                    other_field_.MarkKill(move->second, move->first);
+                    std::cout << "KILL!" << std::endl;
+                    break;
+                }
+            }
+            PrintFields();
+        }
     }
 
 private:
@@ -84,7 +135,7 @@ private:
     }
 
     static std::string MoveToString(std::pair<int, int> move) {
-        char buff[] = {static_cast<char>(move.first) + 'A', static_cast<char>(move.second) + '1'};
+        char buff[] = {static_cast<char>(static_cast<char>(move.first) + 'A'), static_cast<char>(static_cast<char>(move.second) + '1')};
         return {buff, 2};
     }
 
@@ -95,8 +146,23 @@ private:
     bool IsGameEnded() const {
         return my_field_.IsLoser() || other_field_.IsLoser();
     }
-
     // TODO: добавьте методы по вашему желанию
+
+    void ReadMove(){
+
+    }
+
+    void ReadResult(){
+
+    }
+
+    //    bool SendResult(){
+
+    //    }
+
+    //    bool SendMove(){
+
+    //    }
 
 private:
     SeabattleField my_field_;
@@ -105,16 +171,46 @@ private:
 
 void StartServer(const SeabattleField& field, unsigned short port) {
     SeabattleAgent agent(field);
-
     // TODO: реализуйте самостоятельно
+
+    net::io_context io_context;
+
+    tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), port));
+    std::cout << "Waiting for connection..."sv << std::endl;
+
+    boost::system::error_code ec;
+    tcp::socket socket{io_context};
+    acceptor.accept(socket, ec);
+
+    if (ec) {
+        std::cout << "Can't accept connection"sv << std::endl;
+        //exeption
+    }
 
     agent.StartGame(socket, false);
 };
 
 void StartClient(const SeabattleField& field, const std::string& ip_str, unsigned short port) {
     SeabattleAgent agent(field);
-
     // TODO: реализуйте самостоятельно
+
+    boost::system::error_code ec;
+    auto endpoint = tcp::endpoint(net::ip::make_address(ip_str, ec), port);
+
+    if (ec) {
+        std::cout << "Wrong IP format"sv << std::endl;
+        //return 1;
+    }
+
+    net::io_context io_context;
+    tcp::socket socket{io_context};
+    socket.connect(endpoint, ec);
+
+    if (ec) {
+        std::cout << "Can't connect to server"sv << std::endl;
+        //return 1;
+    }
+
 
     agent.StartGame(socket, true);
 };

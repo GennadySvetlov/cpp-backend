@@ -48,12 +48,18 @@ StringResponse HandleRequest(StringRequest&& req) {
     const auto text_response = [&req](http::status status, std::string_view text) {
         return MakeStringResponse(status, text, req.version(), req.keep_alive());
     };
-    std::string_view user_name = req.target();
-    std::string s = {user_name.begin(), user_name.end()};
-    s.erase(0, 1);
-    std::string response = "<strong>Hello, " + s + "</strong>";
-    // Здесь можно обработать запрос и сформировать ответ, но пока всегда отвечаем: Hello
-    return text_response(http::status::ok, response);
+    if (req.method_string() == "GET"){
+        std::string user_name = {req.target().begin(), req.target().end()};
+        user_name.erase(0, 1);
+        std::string response = "Hello, " + user_name;
+        return text_response(http::status::ok, response);
+    } else if (req.method_string() == "HEAD"){
+        return text_response(http::status::ok, "");
+    }
+    else{
+        return text_response(http::status::method_not_allowed, "Invalid method");
+    }
+
 }
 
 std::optional<StringRequest> ReadRequest(tcp::socket& socket, beast::flat_buffer& buffer) {

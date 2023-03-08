@@ -11,8 +11,9 @@ namespace beast = boost::beast;
 namespace http = beast::http;
 using namespace std::literals;
 
+// Запрос, тело которого представлено в виде строки
 using StringRequest = http::request<http::string_body>;
-
+// Ответ, тело которого представлено в виде строки
 using StringResponse = http::response<http::string_body>;
 
 struct ContentType {
@@ -27,6 +28,16 @@ StringResponse MakeStringResponse(http::status status, std::string_view body, un
                                   bool keep_alive,
                                   std::string_view content_type = ContentType::APPLICATION_JSON);
 
+const std::string validMapPath = "/api/v1/maps/";
+
+bool IsMapRequest(std::string request);
+
+bool IsMapsRequest(std::string request);
+
+bool IsApiRequest(std::string request);
+
+std::string GetMapId(std::string request);
+
 class RequestHandler {
 public:
     explicit RequestHandler(model::Game& game)
@@ -35,7 +46,6 @@ public:
 
     RequestHandler(const RequestHandler&) = delete;
     RequestHandler& operator=(const RequestHandler&) = delete;
-
 
     template <typename Body, typename Allocator, typename Send>
     void operator()(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
@@ -47,17 +57,17 @@ public:
             std::string request = {req.target().begin(), req.target().end()};
             std::string response;
 
-            std::vector<std::string> strs;
-            boost::split(strs,request,boost::is_any_of("/"));
+//            std::vector<std::string> strs;
+//            boost::split(strs,request,boost::is_any_of("/"));
 
             try {
-                if (request == "/api/v1/maps"){
+                if (IsMapsRequest(request)){
                     response = json_loader::SerializeMaps(game_);
-                } else if (strs.size() == 5 && request.starts_with("/api/v1/maps/")){
-                    response = json_loader::SerializeMap(game_, strs.at(4));
+                } else if (IsMapRequest(request)){
+                    response = json_loader::SerializeMap(game_, GetMapId(request));
                     if (response == "mapNotFound")
                         throw "mapNotFound";
-                } else if (request.starts_with("/api/")){
+                } else if (IsApiRequest(request)){
                         throw "badRequest";
                 }
                 send(std::move(text_response(http::status::ok, response)));

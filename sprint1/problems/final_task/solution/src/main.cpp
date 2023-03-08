@@ -15,14 +15,14 @@ namespace sys = boost::system;
 
 namespace {
 
-// Запускает функцию fn на n потоках, включая текущий
+// Запускает функцию fn на threadCount потоках, включая текущий
 template <typename Fn>
-void RunWorkers(unsigned n, const Fn& fn) {
-    n = std::max(1u, n);
+void RunWorkers(unsigned threadCount, const Fn& fn) {
+    threadCount = std::max(1u, threadCount);
     std::vector<std::jthread> workers;
-    workers.reserve(n - 1);
-    // Запускаем n-1 рабочих потоков, выполняющих функцию fn
-    while (--n) {
+    workers.reserve(threadCount - 1);
+    // Запускаем threadCount-1 рабочих потоков, выполняющих функцию fn
+    while (--threadCount) {
         workers.emplace_back(fn);
     }
     fn();
@@ -53,6 +53,7 @@ int main(int argc, const char* argv[]) {
 
         // 4. Создаём обработчик HTTP-запросов и связываем его с моделью игры
         http_handler::RequestHandler handler{game};
+
         // 5. Запустить обработчик HTTP-запросов, делегируя их обработчику запросов
         const auto address = net::ip::make_address("0.0.0.0");
         constexpr net::ip::port_type port = 8080;
@@ -60,10 +61,10 @@ int main(int argc, const char* argv[]) {
             handler(std::forward<decltype(req)>(req), std::forward<decltype(send)>(send));
         });
 
-
         // Эта надпись сообщает тестам о том, что сервер запущен и готов обрабатывать запросы
         std::cout << "Server has started..."sv << std::endl;
-	std::cout << "Hello! Server is starting at port " << port << std::endl;
+        std::cout << "Hello! Server is starting at port " << port << std::endl;
+
         // 6. Запускаем обработку асинхронных операций
         RunWorkers(std::max(1u, num_threads), [&ioc] {
             ioc.run();

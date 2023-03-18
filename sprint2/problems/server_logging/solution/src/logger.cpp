@@ -17,8 +17,8 @@ Logger &Logger::GetInstance() {
 void Logger::InitBoostLogFilter() {
     logging::add_common_attributes();
     logging::add_console_log(
-                std::clog,
-                keywords::auto_flush,
+                std::cout,
+                keywords::auto_flush = true,
                 keywords::format = &MyFormatter
             );
 }

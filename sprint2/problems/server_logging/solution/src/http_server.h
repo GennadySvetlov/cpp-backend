@@ -44,7 +44,7 @@ protected:
         auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts_).count();
         json::value custo_data{{"ip"s, stream_.socket().local_endpoint().address().to_string()},
                                {"response_time"s, ts},
-                               {"code"s, safe_response->result_int()}, //status
+                               {"code"s, safe_response->result_int()},
                                {"content_type"s, safe_response->base().at(http::field::content_type)}};
         BOOST_LOG_TRIVIAL(info) << logging::add_value(additional_data, custo_data) << "response sent"sv;
 

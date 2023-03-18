@@ -181,16 +181,11 @@ public:
     LoggingRequestHandler(SomeRequestHandler& requestHandler)
         : decorated_(requestHandler){
     };
-
     template <typename Body, typename Allocator, typename Send>
     void operator()(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send) {
-//        LogRequest(req);
-
-//        decorated_(std::move(req), std::forward<decltype(send)>(send));
+        //Не разобрался как спарсить response и request в этом месте(
         decorated_(std::move(req), std::move(send));
-
         //LogRequest(req);
-
         //LogResponse(send);
     }
 

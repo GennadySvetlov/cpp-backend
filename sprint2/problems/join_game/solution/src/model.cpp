@@ -5,6 +5,10 @@
 namespace model {
 using namespace std::literals;
 
+std::uint64_t Dog::global_dog_id = 0;
+std::uint64_t Player::global_player_id = 0;
+const int maxDogsCount = 5;
+
 void Map::AddOffice(Office office) {
     if (warehouse_id_to_index_.contains(office.GetId())) {
         throw std::invalid_argument("Duplicate warehouse");
@@ -32,6 +36,35 @@ void Game::AddMap(Map map) {
             map_id_to_index_.erase(it);
             throw;
         }
+    }
+}
+
+const Map &Game::CreateSession(const Map::Id &id)
+{
+    auto map = GetRefMap(Map::Id{id});
+    gamesessions_.emplace_back(GameSession{map});
+    return gamesessions_[gamesessions_.size() - 1].GetMap();
+}
+
+bool GameSession::IsFull()
+{
+    return dogs_.size() == maxDogsCount;
+}
+
+void GameSession::AddDog(Dog dog)
+{
+    if (dog_id_to_index_.contains(dog.GetId())) {
+        throw std::invalid_argument("Duplicate dog");
+    }
+
+    const size_t index = dogs_.size();
+    Dog& o = dogs_.emplace_back(std::move(dog));
+    try {
+        dog_id_to_index_.emplace(o.GetId(), index);
+    } catch (...) {
+        // Удаляем собаку из вектора, если не удалось вставить в unordered_map
+        dogs_.pop_back();
+        throw;
     }
 }
 

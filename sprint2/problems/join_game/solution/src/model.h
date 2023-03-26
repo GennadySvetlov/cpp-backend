@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <vector>
 #include <random>
+#include <iomanip>
 
 #include "tagged.h"
 
@@ -171,17 +172,53 @@ private:
 class Dog
 {
 public:
-    Dog() {}
+    using Id = util::Tagged<std::uint64_t, Dog>;
+
+    static std::uint64_t global_dog_id;
+    Dog(std::string name) : name_(name), id_(global_dog_id++) {}
+
+    const Id& GetId() const noexcept {
+        return id_;
+    }
+
+    const std::string& GetName() const noexcept {
+        return name_;
+    }
+
+private:
+    Id id_;
+    std::string name_;
+
 };
 
 class GameSession
 {
 public:
+    using Dogs = std::vector<Dog>;
+
+
     GameSession(Map& map): map_(map) {}
+
+    bool IsFull();
+
+    const Map::Id& GetMapId() const noexcept {
+        return map_.GetId();
+    }
+
+    const Map& GetMap() const noexcept {
+        return map_;
+    }
+
+    void AddDog(Dog dog);
 private:
+    using DogIdToIndex = std::unordered_map<Dog::Id, size_t, util::TaggedHasher<Dog::Id>>;
+//    using PlayerIdToIndex = std::unordered_map<Player::Id, size_t, util::TaggedHasher<Player::Id>>;
     Map& map_;
-    std::vector<Dog> dogs_;
+    DogIdToIndex dog_id_to_index_;
+    Dogs dogs_;
+
 };
+
 
 struct TokenTag {};
 
@@ -190,21 +227,38 @@ using Token = util::Tagged<std::string, TokenTag>;
 class Player
 {
 public:
-    Player(GameSession gameSession, Dog dog, Token token) :
+    using Id = util::Tagged<std::uint64_t, Player>;
+    static std::uint64_t global_player_id;
+    Player(GameSession gameSession, Token token, std::string name) :
         gameSession_(gameSession),
-        dog_(dog),
-        token_(token)
+        //dog_(dog),
+        token_(PlayerToken::GenerateToken()),
+        id_(global_player_id++),
+        name_(name)
     {}
 private:
     Token token_;
     GameSession gameSession_;
-    Dog dog_;
+    //Dog dog_;
+    Id id_;
+    std::string name_;
 };
 
 class PlayerToken
 {
 public:
+    using Players = std::vector<Player>;
     PlayerToken() {}
+
+    Token AppPlayer(Player player)
+
+    static Token GenerateToken(const PlayerToken& obj = PlayerToken{}) {
+        std::stringstream stream;
+        stream << std::hex << obj.generator1_ << obj.generator2_;
+        std::string result( stream.str() );
+        return Token{result};
+    };
+
 private:
     std::random_device random_device_;
     std::mt19937_64 generator1_{[this] {
@@ -221,12 +275,15 @@ private:
     // чтобы сделать их подбор ещё более затруднительным
 };
 
+
 class Game {
 public:
     using Maps = std::vector<Map>;
     using GameSessions = std::vector<GameSession>;
 
     void AddMap(Map map);
+
+    const Map& CreateSession(const Map::Id& id);
 
     const Maps& GetMaps() const noexcept {
         return maps_;
@@ -239,12 +296,27 @@ public:
         return nullptr;
     }
 
+    const Map& GetRefMap(const Map::Id& id) const noexcept{
+        if (auto it = map_id_to_index_.find(id); it != map_id_to_index_.end()) {
+            return maps_.at(it->second);
+        }
+    }
+
+    const Map& GetFreeMap(const Map::Id& id) {
+        for (auto gamesession : gamesessions_) {
+            if (gamesession.GetMapId() == id && !gamesession.IsFull())
+                return gamesession.GetMap();
+        }
+        return CreateSession(id);
+    }
+
+
 private:
     using MapIdHasher = util::TaggedHasher<Map::Id>;
     using MapIdToIndex = std::unordered_map<Map::Id, size_t, MapIdHasher>;
 
-    std::vector<Map> maps_;
-    std::vector<GameSession> gamesessions_;
+    Maps maps_;
+    GameSessions gamesessions_;
     MapIdToIndex map_id_to_index_;
 };
 

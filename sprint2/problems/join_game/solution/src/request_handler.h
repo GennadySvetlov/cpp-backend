@@ -188,7 +188,7 @@ public:
                 if (response == "mapNotFound")
                     throw "mapNotFound";
             } else if (IsJoinRequest(request)){
-                  response == GetJoinResponse(request);
+                response == GetJoinResponse(req.body());
             } else {
                 throw "badRequest";
             }
@@ -223,7 +223,7 @@ public:
             return MakeFileResponse(status, file, req.version(), req.keep_alive(), content_type);
         };
 
-        if (req.method_string() == "GET" || req.method_string() == "HEAD"){
+        if (req.method_string() == "GET" || req.method_string() == "HEAD" || req.method_string() == "POST"){
             std::string request = {req.target().begin(), req.target().end()};
             request = UrlDecode(request);
             std::string response;

@@ -56,6 +56,9 @@ bool IsJoinRequest(std::string request)
 
 std::string GetJoinResponse(std::string request)
 {
+    //auto response = json_loader::SerializeMaps(game_);
+    std::cout << request << std::endl;
+
     return request;
 }
 

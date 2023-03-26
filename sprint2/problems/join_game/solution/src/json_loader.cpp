@@ -87,6 +87,23 @@ void ParseMaps(const std::string &json_str, model::Game &game)
     }
 }
 
+void ParsePlayer(const std::string &json_str, model::Game &game)
+{
+    auto value = json::parse(json_str);
+    for(auto map_obj : value.as_object().at("maps").as_array()){
+        auto id_str = static_cast<std::string>(map_obj.as_object().at("id").as_string());
+        auto name = static_cast<std::string>(map_obj.as_object().at("name").as_string());
+        model::Map::Id id{id_str};
+        auto map = model::Map(id, name);
+
+        ParseRoads(map_obj.as_object().at("roads").as_array(), map);
+        ParseBuildings(map_obj.as_object().at("buildings").as_array(), map);
+        ParseOffices(map_obj.as_object().at("offices").as_array(), map);
+
+        game.AddMap(map);
+    }
+}
+
 void ParseRoads(const json::array &roads, model::Map &map)
 {
     for(auto road_obj : roads){
@@ -187,6 +204,5 @@ json::value BuildLog(std::string ts, json::value data, std::string message)
     log.emplace("message", message);
     return log;
 }
-
 
 }  // namespace json_loader

@@ -39,6 +39,11 @@ void Game::AddMap(Map map) {
     }
 }
 
+void Game::AddPlayer(std::string playerName, std::string mapId)
+{
+
+}
+
 const Map &Game::CreateSession(const Map::Id &id)
 {
     auto map = GetRefMap(Map::Id{id});

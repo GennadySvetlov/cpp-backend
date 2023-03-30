@@ -4,6 +4,7 @@
 #include <vector>
 #include <random>
 #include <iomanip>
+#include <map>
 
 #include "tagged.h"
 
@@ -212,13 +213,11 @@ public:
     void AddDog(Dog dog);
 private:
     using DogIdToIndex = std::unordered_map<Dog::Id, size_t, util::TaggedHasher<Dog::Id>>;
-//    using PlayerIdToIndex = std::unordered_map<Player::Id, size_t, util::TaggedHasher<Player::Id>>;
     Map& map_;
     DogIdToIndex dog_id_to_index_;
     Dogs dogs_;
 
 };
-
 
 struct TokenTag {};
 
@@ -231,8 +230,8 @@ public:
     static std::uint64_t global_player_id;
     Player(GameSession gameSession, Token token, std::string name) :
         gameSession_(gameSession),
-        //dog_(dog),
-        token_(PlayerToken::GenerateToken()),
+//        dog_(dog),
+        token_(token),
         id_(global_player_id++),
         name_(name)
     {}
@@ -250,7 +249,7 @@ public:
     using Players = std::vector<Player>;
     PlayerToken() {}
 
-    Token AppPlayer(Player player)
+    Token AppPlayer(Player player);
 
     static Token GenerateToken(const PlayerToken& obj = PlayerToken{}) {
         std::stringstream stream;
@@ -275,13 +274,14 @@ private:
     // чтобы сделать их подбор ещё более затруднительным
 };
 
-
 class Game {
 public:
     using Maps = std::vector<Map>;
     using GameSessions = std::vector<GameSession>;
 
     void AddMap(Map map);
+
+    void AddPlayer(std::string playerName, std::string mapId);
 
     const Map& CreateSession(const Map::Id& id);
 
@@ -314,7 +314,9 @@ public:
 private:
     using MapIdHasher = util::TaggedHasher<Map::Id>;
     using MapIdToIndex = std::unordered_map<Map::Id, size_t, MapIdHasher>;
+    using Players = std::map<Token, Player>;
 
+    Players players_;
     Maps maps_;
     GameSessions gamesessions_;
     MapIdToIndex map_id_to_index_;

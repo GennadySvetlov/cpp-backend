@@ -198,22 +198,22 @@ public:
     using Dogs = std::vector<Dog>;
 
 
-    GameSession(Map& map): map_(map) {}
+    GameSession(const Map* map): map_{map} {}
 
     bool IsFull();
 
     const Map::Id& GetMapId() const noexcept {
-        return map_.GetId();
+        return map_->GetId();
     }
 
     const Map& GetMap() const noexcept {
-        return map_;
+        return *map_;
     }
 
     void AddDog(Dog dog);
 private:
     using DogIdToIndex = std::unordered_map<Dog::Id, size_t, util::TaggedHasher<Dog::Id>>;
-    Map& map_;
+    const Map* map_;
     DogIdToIndex dog_id_to_index_;
     Dogs dogs_;
 
@@ -235,6 +235,13 @@ public:
         id_(global_player_id++),
         name_(name)
     {}
+    const Token& GetToken() const noexcept {
+        return token_;
+    }
+    const Id& GetId() const noexcept {
+        return id_;
+    }
+
 private:
     Token token_;
     GameSession gameSession_;
@@ -281,9 +288,9 @@ public:
 
     void AddMap(Map map);
 
-    void AddPlayer(std::string playerName, std::string mapId);
+    Player AddPlayer(std::string playerName, std::string mapId);
 
-    const Map& CreateSession(const Map::Id& id);
+    const GameSession& CreateSession(const Map::Id& id);
 
     const Maps& GetMaps() const noexcept {
         return maps_;
@@ -302,10 +309,10 @@ public:
         }
     }
 
-    const Map& GetFreeMap(const Map::Id& id) {
-        for (auto gamesession : gamesessions_) {
+    const GameSession& GetFreeSession(const Map::Id& id) {
+        for (auto &gamesession : gamesessions_) {
             if (gamesession.GetMapId() == id && !gamesession.IsFull())
-                return gamesession.GetMap();
+                return gamesession;
         }
         return CreateSession(id);
     }

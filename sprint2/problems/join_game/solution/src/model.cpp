@@ -39,16 +39,22 @@ void Game::AddMap(Map map) {
     }
 }
 
-void Game::AddPlayer(std::string playerName, std::string mapId)
+Player Game::AddPlayer(std::string playerName, std::string mapId)
 {
-
+    Token token = PlayerToken::GenerateToken();
+    auto freeSession = GetFreeSession(Map::Id{mapId});
+    Player player{freeSession, token, playerName};
+    players_.insert(make_pair(token, player));
+//    return players_[token];
+    return player;
 }
 
-const Map &Game::CreateSession(const Map::Id &id)
+const GameSession &Game::CreateSession(const Map::Id &id)
 {
-    auto map = GetRefMap(Map::Id{id});
+    //auto map = GetRefMap(Map::Id{id});
+    auto map = FindMap(Map::Id{id});
     gamesessions_.emplace_back(GameSession{map});
-    return gamesessions_[gamesessions_.size() - 1].GetMap();
+    return gamesessions_[gamesessions_.size() - 1];
 }
 
 bool GameSession::IsFull()

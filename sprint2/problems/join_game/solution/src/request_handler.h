@@ -157,8 +157,6 @@ bool IsApiRequest(std::string request);
 
 bool IsJoinRequest(std::string request);
 
-std::string GetJoinResponse(std::string request);
-
 std::string GetMapId(std::string request);
 
 std::string UrlDecode(const std::string& value);
@@ -188,7 +186,7 @@ public:
                 if (response == "mapNotFound")
                     throw "mapNotFound";
             } else if (IsJoinRequest(request)){
-                response == GetJoinResponse(req.body());
+                response == json_loader::ParseJoinRequest(req.body(), game_);
             } else {
                 throw "badRequest";
             }

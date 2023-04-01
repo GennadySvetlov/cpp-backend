@@ -54,14 +54,6 @@ bool IsJoinRequest(std::string request)
     return request == "/api/v1/game/join";
 }
 
-std::string GetJoinResponse(std::string request)
-{
-    //auto response = json_loader::SerializeMaps(game_);
-    std::cout << request << std::endl;
-
-    return request;
-}
-
 std::string UrlDecode(const std::string &value)
 {
     std::string result;

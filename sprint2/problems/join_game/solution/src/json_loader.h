@@ -21,7 +21,7 @@ void ParseBuildings(const json::array& buildings, model::Map& map);
 
 void ParseOffices(const json::array& offices, model::Map& map);
 
-void ParsePlayer(const std::string& json_str, model::Game& game);
+std::string ParseJoinRequest(const std::string& json_str, model::Game& game);
 
 std::string SerializeMaps(const model::Game& game);
 
